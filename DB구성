@@ -1,0 +1,267 @@
+﻿create table members(
+m_idx NUMBER not null PRIMARY key,
+id VARCHAR2(50) UNIQUE,
+pw VARCHAR2(50),
+email VARCHAR2(50),
+name VARCHAR2(50),
+gender VARCHAR2(50),
+regdate date);
+
+create table recipe(
+r_idx NUMBER not null,
+m_idx NUMBER,
+subject VARCHAR2(50),
+content_ VARCHAR2(4000),
+file_name VARCHAR2(50),
+cate VARCHAR2(50), // 삭제
+type VARCHAR2(50), // 추가
+situ VARCHAR2(50,  // 추가
+mate VARCHAR2(50),
+meth VARCHAR2(50,  // 추가
+view_ NUMBER,
+hit NUMBER,
+regdate date,
+PRIMARY key (r_idx),
+foreign key (m_idx) references members(m_idx)
+);
+
+create table recipe_c(
+r_c_idx NUMBER not null,
+r_idx NUMBER,
+m_idx NUMBER,
+content_ VARCHAR2(4000),
+hit NUMBER,
+regdate date,
+PRIMARY key (r_c_idx),
+foreign key (m_idx) references members(m_idx),
+foreign key (r_idx) references recipe(r_idx)
+);
+
+create table talk(
+t_idx NUMBER not null,
+m_idx NUMBER,
+subject VARCHAR2(50),	// 삭제
+content_ VARCHAR2(4000),
+file_name VARCHAR2(50),
+hit NUMBER,
+regdate date,
+PRIMARY key (t_idx),
+foreign key (m_idx) references members(m_idx)
+);
+
+create table talk_c(
+t_c_idx NUMBER not null,
+m_idx NUMBER,
+t_idx NUMBER,
+content_ VARCHAR2(4000),
+hit NUMBER,
+regdate date,
+PRIMARY key (t_idx),
+foreign key (m_idx) references members(m_idx),
+foreign key (t_idx) references talk(t_idx)
+);
+
+========================================================================
+시퀀스 추가
+create sequence members_seq increment by 1 start with 1 nocycle;
+create sequence recipe_seq increment by 1 start with 1 nocycle;
+create sequence recipe_c_seq increment by 1 start with 1 nocycle;
+create sequence talk_seq increment by 1 start with 1 nocycle;
+create sequence talk_c_seq increment by 1 start with 1 nocycle;
+
+
+어드민 계정 임의추가
+insert into members values (members_seq.nextval, 'admin', 'admin', null, 'admin', 'male', sysdate);
+
+========================================================================
+recipe 구조 수정
+alter table recipe add type varchar2(50);
+alter table recipe add situ varchar2(50);
+alter table recipe add meth varchar2(50);
+alter table recipe drop COLUMN cate;
+
+========================================================================
+talk 구조 수정
+alter table talk drop column subject;
+
+========================================================================
+recipe 재생성
+drop table recipe;
+
+create table recipe (
+  r_idx number primary key,
+  m_idx number,
+  recipe_title varchar2(4000),
+  recipe_introduce varchar2(4000),
+  recipe_video varchar2(100),
+  ca1 varchar2(50),
+  ca2 varchar2(50),
+  ca3 varchar2(50),
+  ca4 varchar2(50),
+  recipe_quant varchar2(50),
+  recipe_time varchar2(50),
+  recipe_difficulty varchar2(50),
+  main_image clob,
+  pack clob,
+  material varchar2(4000),
+  orderContent clob,
+  finImage clob,
+  recipe_tip varchar2(50),
+  recipe_tag varchar2(500),
+  hit number,
+  likes number,
+  regdate date,
+  lastedit date,
+  savepublic number,
+  a_permission number,
+  foreign key(m_idx) references members(m_idx)
+);
+
+
+===================================================================
+drop table talk_c;
+
+create table talk_c(
+t_c_idx NUMBER not null,
+m_idx NUMBER,
+t_idx NUMBER,
+name VARCHAR2(50),
+content VARCHAR2(4000),
+heart NUMBER,
+regdate date,
+PRIMARY key (t_c_idx),
+foreign key (m_idx) references members(m_idx),
+foreign key (t_idx) references talk(t_idx)
+);
+
+===============================================================================
+talk-like 테이블 생성
+create table t_like(
+  t_l_idx number primary key,
+  m_idx number,
+  t_idx number,
+  foreign key (m_idx) references members(m_idx),
+  foreign key (t_idx) references talk(t_idx),
+  unique (m_idx, t_idx)
+);
+시퀀스
+create sequence t_l_seq increment by 1 start with 1 nocycle;
+
+===============================================================================
+talk 구조 수정
+ALTER TABLE talk RENAME COLUMN content_ TO content;
+ALTER TABLE talk RENAME COLUMN hit TO heart;
+alter table talk add co_count number;
+
+===============================================================================
+create table talk(
+t_idx NUMBER not null,
+m_idx NUMBER,
+name VARCHAR2(50),
+content VARCHAR2(4000),
+file_name VARCHAR2(50),
+heart NUMBER,
+regdate date,
+co_count number,
+PRIMARY key (t_idx),
+foreign key (m_idx) references members(m_idx)
+);
+
+===============================================================================
+members 추가
+
+alter table members add prf_img CLOB;
+
+===============================================================================
+문의 테이블 생성 - 의견 제출, 댓글 신고를 위한 테이블
+create table qna(
+q_idx NUMBER not null,
+m_idx NUMBER,
+q_def varchar2(50),
+content VARCHAR2(4000),
+regdate date,
+status varchar2(50),
+PRIMARY key (q_idx),
+foreign key (m_idx) references members(m_idx)
+);
+
+시퀀스
+create sequence q_seq increment by 1 start with 1 nocycle;
+===============================================================================
+랭킹 테이블
+create table r_rank(
+r_rank_idx number,
+r_idx number,
+r_date date,
+r_count number,
+primary key (r_rank_idx),
+foreign key (r_idx) references recipe(r_idx)
+);
+
+시퀀스
+create sequence r_rank_seq increment by 1 start with 1 nocycle;
+===============================================================================
+방문자 테이블
+create table visitor(
+v_idx NUMBER not null,
+v_date date,
+v_count number,
+PRIMARY key (v_idx)
+);
+
+시퀀스
+create sequence v_seq increment by 1 start with 1 nocycle;
+===============================================================================
+이벤트 테이블
+create table event(
+  e_idx number primary key,
+  m_idx number,
+  e_title varchar2(100),
+  e_start date,
+  e_end date,
+  e_type number(1),
+  e_public number(1),
+  e_banner clob,
+  e_content varchar2(4000),
+  e_image clob,
+  e_regdate date,
+  foreign key (m_idx) references members(m_idx)
+);
+
+시퀀스
+create sequence e_seq increment by 1 start with 1 nocycle;
+===============================================================================
+레시피 - 관리자 메모 테이블
+create table r_memo(
+  r_m_idx number primary key,
+  r_idx number,
+  m_idx number,
+  r_m_content varchar2(400),
+  r_m_regdate date,
+  foreign key (m_idx) references members(m_idx),
+  foreign key (r_idx) references recipe(r_idx)
+);
+
+시퀀스
+create sequence r_m_seq increment by 1 start with 1 nocycle;
+===============================================================================
+레시피 댓글 테이블 수정
+ALTER TABLE recipe_c RENAME COLUMN content_ TO content;
+===============================================================================
+관리자 테이블
+create table manager(
+  mng_idx number primary key,
+  m_idx number,
+  mng_contact varchar2(50),
+  mng_email varchar2(50),
+  mng_grade varchar2(50),
+  mng_regdate date,
+  foreign key (m_idx) references members(m_idx)
+);
+
+시퀀스
+create sequence mng_seq increment by 1 start with 1 nocycle;
+===============================================================================
+**** 멤버시퀀스 수정
+alter sequence members_seq nocache;
+===============================================================================

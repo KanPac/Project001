@@ -1,0 +1,708 @@
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Project01Mapper">
+	<select id="login" parameterType="mvo" resultType="mvo">
+		select * from members where id=#{id} and pw=#{pw}
+	</select>
+	
+	<select id="list" resultType="mvo">
+		select * from members order by regdate desc
+	</select>
+	
+	<select id="sumHit" resultType="int">
+		select sum(hit) from recipe
+	</select>
+	
+	<select id="countRecipe" resultType="int">
+		select count(*) from recipe where a_permission = 1
+	</select>
+	
+	<select id="chkDate" parameterType="String" resultType="vvo">
+		select * from visitor where v_date = #{date}
+	</select>
+	
+	<insert id="insertVisitor" parameterType="String">
+		insert into visitor values(v_seq.nextval, #{date}, 1)
+	</insert>
+	
+	<update id="updateVisitor" parameterType="String">
+		update visitor set v_count = (v_count + 1) where v_date = #{date}
+	</update>
+	
+	<select id="monthlyVisitor" parameterType="Map" resultType="int">
+		select sum(v_count) from visitor <![CDATA[where v_date >= #{start} and v_date <= #{endt}]]>
+	</select>
+	
+	<insert id="join" parameterType="mvo">
+		insert into members
+		values(members_seq.nextval,#{id},#{pw},#{email},#{name},#{gender},sysdate, null)
+	</insert>
+	
+	<select id="chkEmail" parameterType="mvo" resultType="int">
+		select count(*) from members where email = #{email}
+	</select>
+	
+	<update id="updateEmail" parameterType="mvo">
+		update members set email = #{email} where id = #{id} 
+	</update>
+	
+	<select id="chkName" parameterType="mvo" resultType="int">
+		select count(*) from members where name = #{name}
+	</select>
+	
+	<update id="updateName" parameterType="mvo">
+		update members set name = #{name} where id = #{id} 
+	</update>
+	
+	<select id="chkPw" parameterType="mvo" resultType="int">
+		select count(*) from members where id = #{id} and pw = #{pw}
+	</select>
+	
+	<update id="updatePw" parameterType="mvo">
+		update members set pw = #{pw} where id = #{id}
+	</update>
+	
+	<select id="m_list" resultType="mvo">
+		select * from members order by regdate desc
+	</select>
+	
+	<select id="recipe_count" resultType="int">
+		select count(*) from members join recipe on members.m_idx=recipe.m_idx order by recipe.regdate desc
+	</select>
+	
+	<select id="member_count" resultType="int">
+		select count(*) from members order by regdate desc
+	</select>
+	
+	<select id="onememberlist" parameterType="String" resultType="mvo">
+		select * from members where name = #{name}
+	</select>
+	
+	<select id="onerecipelist" parameterType="String" resultType="rvo">
+		select * from members join recipe on members.m_idx=recipe.m_idx where name = #{name} order by recipe.regdate desc
+	</select>
+	
+	<select id="findPw" parameterType="String" resultType="mvo">
+		select * from members where email = #{email}
+	</select>
+	
+	<update id="pwUpdate" parameterType="mvo">
+		update members set pw = #{pw} where m_idx = #{m_idx}
+	</update>
+	
+	<insert id="insertReport">
+		insert into qna values (q_seq.nextval, #{m_idx}, #{q_def}, #{content}, sysdate, 0)
+	</insert>
+	
+	<insert id="insert_recipe" parameterType="rvo">
+		insert into recipe(r_idx, m_idx, recipe_title, recipe_introduce, recipe_video, ca1, ca2, ca3, ca4, recipe_quant, recipe_time, recipe_difficulty, main_image, pack, material, orderContent, finImage, recipe_tip, recipe_tag, hit, likes, regdate, lastedit, savepublic, a_permission)
+			values (recipe_seq.nextval, #{m_idx}, #{recipe_title}, #{recipe_introduce}, #{recipe_video}, #{ca1}, #{ca2}, #{ca3}, #{ca4}, #{recipe_quant}, #{recipe_time}, #{recipe_difficulty}, #{main_image}, #{pack}, #{material}, #{orderContent}, #{finImage}, #{recipe_tip}, #{recipe_tag} , 0, 0, sysdate, sysdate, #{savepublic}, #{a_permission})
+	</insert>
+	
+	<insert id="repCom" parameterType="qvo">
+		insert into qna values (q_seq.nextval, #{m_idx}, #{q_def}, #{content}, sysdate, 0, null)
+	</insert>
+	
+	<select id="count_recipe" parameterType="rvo" resultType="int">
+		select count(*) from recipe
+			<where>
+				savepublic = 1
+				<if test="a_permission != null and a_permission != ''">
+					and a_permission=#{a_permission}
+				</if>
+				<if test="k != null and k != ''">
+					and (recipe_title like '%'||#{k}||'%' or recipe_introduce like '%'||#{k}||'%' or pack like '%'||#{k}||'%' or material like '%'||#{k}||'%' or ordercontent like '%'||#{k}||'%' or recipe_tip like '%'||#{k}||'%' or recipe_tag like '%'||#{k}||'%')
+				</if>
+				<if test="recipe_title != null and recipe_title != ''">
+					and recipe_title like '%'||#{recipe_title}||'%'
+				</if>
+				<if test="ca1 != null and ca1 != ''">
+					and ca1=#{ca1}
+				</if>
+				<if test="ca2 != null and ca2 != ''">
+					and ca2=#{ca2}
+				</if>
+				<if test="ca3 != null and ca3 != ''">
+					and ca3=#{ca3}
+				</if>
+				<if test="ca4 != null and ca4 != ''">
+					and ca4=#{ca4}
+				</if>
+			</where>
+	</select>
+	
+	<select id="recipe_list" parameterType="map" resultType="rvo">
+		select * from (
+			select rownum as r_num, a.* from (
+				select r.*, m.name as writer from recipe r, members m
+					<where>
+						r.m_idx = m.m_idx and savepublic = 1
+						<if test="a_permission != null and a_permission != ''">
+							and r.a_permission=#{a_permission}
+						</if>
+						<if test="k != null and k != ''">
+							and (recipe_title like '%'||#{k}||'%' or recipe_introduce like '%'||#{k}||'%' or pack like '%'||#{k}||'%' or material like '%'||#{k}||'%' or ordercontent like '%'||#{k}||'%' or recipe_tip like '%'||#{k}||'%' or recipe_tag like '%'||#{k}||'%' or m.name like '%'||#{k}||'%')
+						</if>
+						<if test="recipe_title != null and recipe_title != ''">
+							and recipe_title like '%'||#{recipe_title}||'%'
+						</if>
+						<if test="ca1 != null and ca1 != ''">
+							and r.ca1=#{ca1}
+						</if>
+						<if test="ca2 != null and ca2 != ''">
+							and r.ca2=#{ca2}
+						</if>
+						<if test="ca3 != null and ca3 != ''">
+							and r.ca3=#{ca3}
+						</if>
+						<if test="ca4 != null and ca4 != ''">
+							and r.ca4=#{ca4}
+						</if>
+					</where>
+					order by r.r_idx desc
+			) a
+		) where r_num between #{begin} and #{end}
+	</select>
+	
+	<select id="a_count_recipe" parameterType="rvo" resultType="int">
+		select count(*) from recipe r, members m
+			<where>
+				r.m_idx = m.m_idx and savepublic = 1 and <![CDATA[r.regdate >= #{start} and r.regdate <= #{endt}]]>
+				<if test="name != null and name != ''">
+					and m.name like '%'||#{name}||'%'
+				</if>
+				<if test="id != null and id != ''">
+					and m.id like '%'||#{id}||'%'
+				</if>
+				<if test="r_idx != null and r_idx != ''">
+					and r_idx = #{r_idx}
+				</if>
+				<if test="email != null and email != ''">
+					and m.email like '%'||#{email}||'%'
+				</if>
+				<if test="recipe_title != null and recipe_title != ''">
+					and recipe_title like '%'||#{recipe_title}||'%'
+				</if>
+				<if test="a_permission != null and a_permission != ''">
+					and a_permission=#{a_permission}
+				</if>
+				<if test="type != null and type != ''">
+					<if test="type == 1">
+						and recipe_video is null
+					</if>
+					<if test="type == 2">
+						and recipe_video is not null
+					</if>
+				</if>
+			</where>
+	</select>
+	
+	<select id="a_recipe_list" parameterType="map" resultType="rvo">
+		select * from (
+			select rownum as r_num, a.* from (
+				select r.*, m.name, m.id, m.email from recipe r, members m
+					<where>
+						r.m_idx = m.m_idx and savepublic = 1 and <![CDATA[r.regdate >= #{start} and r.regdate <= #{endt}]]>
+						<if test="name != null and name != ''">
+							and m.name like '%'||#{name}||'%'
+						</if>
+						<if test="id != null and id != ''">
+							and m.id like '%'||#{id}||'%'
+						</if>
+						<if test="r_idx != null and r_idx != ''">
+							and r_idx = #{r_idx}
+						</if>
+						<if test="email != null and email != ''">
+							and m.email like '%'||#{email}||'%'
+						</if>
+						<if test="recipe_title != null and recipe_title != ''">
+							and recipe_title like '%'||#{recipe_title}||'%'
+						</if>
+						<if test="a_permission != null and a_permission != ''">
+							and a_permission=#{a_permission}
+						</if>
+						<if test="type != null and type != ''">
+							<if test="type == 1">
+								and recipe_video is null
+							</if>
+							<if test="type == 2">
+								and recipe_video is not null
+							</if>
+						</if>
+					</where>
+					order by r.r_idx desc
+			) a
+		) where r_num between #{begin} and #{end}
+	</select>
+	
+	<select id="view_recipe" parameterType="String" resultType="rvo">
+		select r.*, m.name writer from recipe r, members m where r_idx = #{r_idx} and r.m_idx=m.m_idx
+	</select>
+	
+	<insert id="talk_write" parameterType="tvo">
+		insert into talk values(talk_seq.nextval, #{m_idx}, #{name}, #{content}, #{file_name}, #{heart}, sysdate, 0)
+	</insert>
+	
+	<select id="talk_list" resultType="tvo">
+		select * from (select * from talk order by t_idx desc) <![CDATA[where rownum >= 1 and rownum <= 5]]>
+	</select>
+	<select id="talk_p_list" parameterType="Map" resultType="tvo">
+		select * from (
+			select rownum r_num, a.* from(
+				select t.*, m.prf_img from talk t, members m where t.m_idx = m.m_idx order by t_idx desc ) a
+			) where r_num between #{begin} and #{end}
+	</select>
+	<select id="talk_prf_img" parameterType="String" resultType="String">
+		select prf_img from members where m_idx = 1
+	</select>
+	<select id="t_count" resultType="int">
+		select count(*) from talk
+	</select>
+	<delete id="tl_del" parameterType="String">
+		delete from t_like where t_idx = #{t_idx}
+	</delete>
+	<delete id="t_del" parameterType="String">
+	 	delete from talk_c where t_idx = #{t_idx}
+	</delete>
+	<delete id="talk_del" parameterType="String">
+		delete from talk where t_idx = #{t_idx}
+	</delete>
+	<update id="talk_update" parameterType="tvo">
+		update talk set content=#{content}, file_name=#{file_name} where t_idx =#{t_idx}
+	</update>
+	<select id="t_co_count" parameterType="String" resultType="int">
+		select count(*) from talk_c where t_idx = #{t_idx}
+	</select>
+	
+	<select id="talk_view" parameterType="String" resultType="tvo">
+		select t.*, m.prf_img from talk t, members m where t_idx = #{t_idx} and t.m_idx = m.m_idx
+	</select>
+	
+	<insert id="t_co_write" parameterType="String">
+		insert into talk_c values(talk_c_seq.nextval, #{m_idx}, #{t_idx}, #{name}, #{content}, 0, sysdate)
+	</insert>
+	
+	<delete id="t_c_del" parameterType="String">
+		delete from talk_c where t_c_idx = #{t_c_idx}
+	</delete>
+	
+	<select id="t_co_list" parameterType="String" resultType="tcvo">
+		select tc.*, m.prf_img from talk_c tc, members m where t_idx = #{t_idx} and tc.m_idx = m.m_idx
+	</select>
+	<select id="get_talk_like" parameterType="tlvo" resultType="int">
+		select count(*) from t_like where t_idx = #{t_idx} and m_idx = #{m_idx}
+	</select>
+	<insert id="talklike" parameterType="tlvo">
+		insert into t_like values (t_l_seq.nextval, #{m_idx}, #{t_idx})
+	</insert>
+	<delete id="talkunlike" parameterType="tlvo">
+		delete from t_like where m_idx = #{m_idx} and t_idx = #{t_idx}
+	</delete>
+	<update id="t_likeupdate" parameterType="String">
+		update talk set heart = heart + 1 where t_idx = #{t_idx}
+	</update>
+	<update id="t_unlikeupdate" parameterType="String">
+		update talk set heart = heart - 1 where t_idx = #{t_idx}
+	</update>
+	<select id="t_countlike" parameterType="tlvo" resultType="int">
+		select count(*) from t_like where t_idx = #{t_idx}
+	</select>
+	<update id="rhitupdate" parameterType="rvo">
+		update recipe set hit = #{hit} where r_idx = #{r_idx}
+	</update>
+	
+	<select id="chkRank" parameterType="rrvo" resultType="rrvo">
+		select * from r_rank where r_idx = #{r_idx} and r_date = #{r_date}
+	</select>
+	
+	<select id="recipe_comment_list" parameterType="String" resultType="rcvo">
+		select rc.*, m.name from recipe_c rc, members m where rc.m_idx = m.m_idx and r_idx = #{r_idx} order by r_c_idx desc
+	</select>
+	
+	<select id="count_comment" parameterType="String" resultType="int">
+		select count(*) from recipe_c where r_idx = #{r_idx}
+	</select>
+	
+	<delete id="delete_rcomment" parameterType="rcvo">
+		delete from recipe_c where r_c_idx = #{r_c_idx}
+	</delete>
+	
+	<update id="updateCount" parameterType="rrvo">
+		update r_rank set r_count = #{r_count} where r_rank_idx = #{r_rank_idx}
+	</update>
+	
+	<insert id="insertCount" parameterType="rrvo">
+		insert into r_rank values (r_rank_seq.nextval, #{r_idx}, #{r_date}, 1)
+	</insert>
+	
+	<select id="todayRecipe" parameterType="rrvo" resultType="rrvo">
+		select * from (select rr.r_idx, name, recipe_title, r_count from r_rank rr, recipe r, members m where r_date = #{r_date} and rr.r_idx = r.r_idx and r.m_idx = m.m_idx and savepublic = 1 and a_permission = 1 order by r_count desc) a <![CDATA[where rownum >= 1 and rownum <= 5]]>
+	</select>
+	
+	<select id="monthRecipe" parameterType="Map" resultType="rrvo">
+		select * from (
+			select t.*, name, recipe_title from (
+				select r_idx, sum(r_count) r_count from r_rank where <![CDATA[r_date >= #{start} and r_date <= #{endt}]]> group by r_idx
+			) t, recipe r, members m where t.r_idx = r.r_idx and m.m_idx = r.m_idx and savepublic = 1 and a_permission = 1 order by r_count desc
+		) where <![CDATA[rownum >= 1 and rownum <= 5]]>
+	</select>
+	
+	<insert id="insert_recipe_comment" parameterType="rcvo">
+		insert into recipe_c values (recipe_c_seq.nextval, #{r_idx}, #{m_idx}, #{content}, 0, sysdate)
+	</insert>
+	<select id="onelistrecipe" parameterType="String" resultType="rvo">
+		select r.*, m.name, m.email from recipe r, members m where r_idx = #{r_idx} and r.m_idx = m.m_idx
+	</select>
+	
+	<select id="getRecipeMemoList" parameterType="rmvo" resultType="rmvo">
+		select rm.*, name from r_memo rm, members m where rm.m_idx = m.m_idx and r_idx = #{r_idx}
+	</select>
+	
+	<insert id="insertRecipeMemo" parameterType="rmvo">
+		insert into r_memo values (r_m_seq.nextval, #{r_idx}, #{m_idx}, #{r_m_content}, sysdate)
+	</insert>
+	
+	<update id="admin_accept" parameterType="String">
+		update recipe set a_permission = 1 where r_idx = #{r_idx}	
+	</update>
+	<select id="onelistmember" parameterType="String" resultType="mvo">
+		select * from members where m_idx = #{m_idx}
+	</select>
+	
+	<select id="qCount" parameterType="qvo" resultType="int">
+		select count(*) from qna q, members m
+			<where>
+				<![CDATA[q.regdate >= #{start} and q.regdate <= #{endt} and q.m_idx = m.m_idx]]>
+				<if test="id != null and id != ''">
+					and m.id = #{id}
+				</if>
+				<if test="name != null and name != ''">
+					and m.name = #{name}
+				</if>
+				<if test="m_idx != null and m_idx != ''">
+					and q.m_idx = #{m_idx}
+				</if>
+				<if test="email != null and email != ''">
+					and m.email like '%'||#{email}||'%'
+				</if>
+			</where>
+	</select>
+	
+	<select id="q_list" resultType="qvo">
+		select * from qna join members on qna.m_idx=members.m_idx order by qna.regdate desc
+	</select>
+	
+	<select id="qlist" parameterType="qvo" resultType="qvo">
+		select * from (
+			select rownum as r_num, a.* from (
+				select q.*, m.name, m.id, m.email from qna q, members m
+					<where>
+						<![CDATA[q.regdate >= #{start} and q.regdate <= #{endt} and q.m_idx = m.m_idx]]>
+						<if test="id != null and id != ''">
+							and m.id = #{id}
+						</if>
+						<if test="name != null and name != ''">
+							and m.name = #{name}
+						</if>
+						<if test="m_idx != null and m_idx != ''">
+							and q.m_idx = #{m_idx}
+						</if>
+						<if test="email != null and email != ''">
+							and m.email like '%'||#{email}||'%'
+						</if>
+					</where>
+				order by q_idx desc
+			) a
+		) where r_num between #{begin} and #{end}
+	</select>
+	
+	<select id="qnaDetail" parameterType="rcvo" resultType="rcvo">
+		select rc.*, id, name from recipe_c rc, members m where rc.m_idx = m.m_idx and r_c_idx = #{r_c_idx}
+	</select>
+	
+	<update id="compQnA" parameterType="qvo">
+		update qna set status = 1 where q_idx = #{q_idx}
+	</update>
+	
+	<select id="a_count_member" parameterType="mvo" resultType="int">
+		select count(*) from members m
+				<where>
+				<![CDATA[m.regdate >= #{start} and m.regdate <= #{endt}]]>
+				<if test="name != null and name != ''">
+					and m.name = #{name}
+				</if>
+				<if test="id != null and id != ''">
+					and m.id = #{id}
+				</if>
+				<if test="m_idx != null and m_idx != ''">
+					and m_idx = #{m_idx}
+				</if>
+				<if test="email != null and email != ''">
+					and m.email = #{email}
+				</if>
+				<if test="gender != null and gender != ''">
+					and m.gender = #{gender}
+				</if>
+			</where>
+	</select>
+	
+	<select id="a_member_list" parameterType="map" resultType="mvo">
+		select * from (
+			select rownum as r_num, a.* from (
+				select * from members
+					<where>
+					<![CDATA[regdate >= #{start} and regdate <= #{endt}]]>
+						<if test="name != null and name != ''">
+							and name = #{name}
+						</if>
+						<if test="id != null and id != ''">
+							and id = #{id}
+						</if>
+						<if test="m_idx != null and m_idx != ''">
+							and m_idx = #{m_idx}
+						</if>
+						<if test="email != null and email != ''">
+							and email = #{email}
+						</if>
+						<if test="gender != null and gender != ''">
+							and gender = #{gender}
+						</if>
+					</where>
+					order by m_idx desc
+			) a
+		) where r_num between #{begin} and #{end}
+	</select>
+	
+	<select id="a_count_event" parameterType="evo" resultType="int">
+		select count(*) from event
+			<where>
+				<if test='open != null and open.equals("1")'>
+					and <![CDATA[e_end > sysdate and e_start < sysdate]]>
+				</if>
+				<if test='open != null and open.equals("0")'>
+					and <![CDATA[e_end < sysdate]]>
+				</if>
+				<if test="e_type != null and e_type != ''">
+					and e_type = #{e_type}
+				</if>
+			</where>
+	</select>
+	
+	<select id="a_event_list" parameterType="evo" resultType="evo">
+		select * from (
+			select rownum as r_num, e.* from (
+				select * from event
+				<where>
+					<if test='open != null and open.equals("1")'>
+						and <![CDATA[e_end > sysdate and e_start < sysdate]]>
+					</if>
+					<if test='open != null and open.equals("0")'>
+						and <![CDATA[e_end < sysdate]]>
+					</if>
+					<if test="e_type != null and e_type != ''">
+						and e_type = #{e_type}
+					</if>
+				</where>
+				order by e_start desc
+			) e
+		) where r_num between #{begin} and #{end}
+	</select>
+	
+	<select id="a_view_event" parameterType="evo" resultType="evo">
+		select e.*, name from event e, members m where e_idx = #{e_idx} and e.m_idx = m.m_idx
+	</select>
+	
+	<insert id="insertEvent" parameterType="evo">
+		insert into event(e_idx, m_idx, e_title, e_start, e_end, e_type, e_public, e_regdate, e_content, e_banner, e_image) values (e_seq.nextval, #{m_idx}, #{e_title}, to_date(#{e_start}, 'YYYY-MM-DD HH24:MI'), to_date(#{e_end}, 'YYYY-MM-DD HH24:MI'), #{e_type}, #{e_public}, #{e_regdate}, #{e_content, jdbcType=CLOB}, #{e_banner}, #{e_image, jdbcType=CLOB})
+	</insert>
+	
+	<select id="countEvent" parameterType="evo" resultType="int">
+		select count(*) from event
+			<where>
+				e_public = 1
+				<if test='open != null and open.equals("1")'>
+					and <![CDATA[e_end > sysdate and e_start < sysdate]]>
+				</if>
+				<if test='open != null and open.equals("0")'>
+					and <![CDATA[e_end < sysdate]]>
+				</if>
+				<if test="e_type != null and e_type != ''">
+					and e_type = #{e_type}
+				</if>
+			</where>
+	</select>
+	
+	<select id="eventList" parameterType="evo" resultType="evo">
+		select * from (
+			select rownum as r_num, e.* from (
+				select * from event
+				<where>
+					e_public = 1
+					<if test='open != null and open.equals("1")'>
+						and <![CDATA[e_end > sysdate and e_start < sysdate]]>
+					</if>
+					<if test='open != null and open.equals("0")'>
+						and <![CDATA[e_end < sysdate]]>
+					</if>
+					<if test="e_type != null and e_type != ''">
+						and e_type = #{e_type}
+					</if>
+				</where>
+				order by e_end asc
+			) e
+		) where r_num between #{begin} and #{end}
+	</select>
+	
+	<select id="prizeList" resultType="evo">
+		select * from (
+			select rownum as r_num, e.* from (
+				select * from event where e_public = 1 and e_type = 2 order by e_regdate desc
+			) e
+		) where r_num between 1 and 3
+	</select>
+	
+	<update id="editEvent" parameterType="evo">
+		update event
+			<set>
+				<if test="e_title != null">e_title = #{e_title}</if>
+				<if test="e_start != null">e_start = to_date(#{e_start}, 'YYYY-MM-DD HH24:MI')</if>
+				<if test="e_end != null">e_end = to_date(#{e_end}, 'YYYY-MM-DD HH24:MI')</if>
+				<if test="e_public != null">e_public = #{e_public}</if>
+				<if test="e_banner != null">e_banner = #{e_banner}</if>
+				<if test="e_content != null">e_content = #{e_content}</if>
+			</set>
+		where e_idx = #{e_idx}
+	</update>
+	
+	<select id="viewEvent" parameterType="String" resultType="evo">
+		select * from event where e_idx = #{e_idx}
+	</select>
+	
+	<select id="countMyRecipe" parameterType="rvo" resultType="int">
+		select count(*) from recipe where m_idx = #{m_idx} and savepublic = #{savepublic}
+	</select>
+	
+	<select id="myRecipeList" parameterType="rvo" resultType="rvo">
+		select * from (
+			select rownum as r_num, a.* from (
+				select r.*, nvl(count, 0) count from recipe r, (
+					select c.r_idx, count(*) count from recipe_c c group by c.r_idx
+				) g where r.r_idx = g.r_idx(+) and r.m_idx = #{m_idx} and r.savepublic = #{savepublic}
+			) a
+		) where r_num between #{begin} and #{end}
+	</select>
+	
+	<select id="countMyTalk" parameterType="String" resultType="int">
+		select count(*) from talk where m_idx = #{m_idx}
+	</select>
+	
+	<select id="myTalkList" parameterType="tvo" resultType="tvo">
+		select * from (
+			select rownum as r_num, a.* from (
+				select t.*, m.prf_img from talk t, members m where t.m_idx = #{m_idx} and t.m_idx = m.m_idx
+			) a
+		) where r_num between #{begin} and #{end}
+	</select>
+	
+	<select id="reportList" parameterType="String" resultType="qvo">
+		select * from (
+			select rownum as r_num, a.* from (
+				select * from qna where m_idx = #{m_idx} and q_def != '댓글신고'
+			) a
+		) where r_num between 1 and 10
+	</select>
+	
+	<select id="countWriteComment" parameterType="rcvo" resultType="int">
+		select count(*) from recipe_c where m_idx = #{m_idx}
+	</select>
+	
+	<select id="myWriteComment" parameterType="rcvo" resultType="rcvo">
+		select * from (
+			select rownum as r_num , a.* from (
+				select rc.r_idx, rc.content, rc.regdate, r.main_image, r.recipe_title, m.name from recipe_c rc, recipe r, members m where rc.r_idx = r.r_idx and r.m_idx = m.m_idx and rc.m_idx = #{m_idx}
+			) a
+		) where r_num between #{begin} and #{end}
+	</select>
+	
+	<select id="countGetComment" parameterType="rcvo" resultType="int">
+		select count(*) from recipe_c rc, recipe r where r.r_idx = rc.r_idx and r.m_idx = #{m_idx}
+	</select>
+	
+	<select id="myGetComment" parameterType="rcvo" resultType="rcvo">
+		select * from (
+			select rownum as r_num, a.* from(
+				select rc.r_idx, rc.content, rc.regdate, r.main_image, r.recipe_title, m.name from recipe_c rc, recipe r, members m where rc.r_idx = r.r_idx and rc.m_idx = m.m_idx and r.m_idx = #{m_idx}
+			) a
+		) where r_num between #{begin} and #{end}
+	</select>
+	
+	<update id="myPrf_img_up" parameterType="map">
+		update members set prf_img = #{prf_img} where m_idx = #{m_idx}
+	</update>
+	
+	<select id="countManager" parameterType="mngvo" resultType="int">
+		select count(*) from manager mng, members m
+			<where>
+				mng.m_idx = m.m_idx and <![CDATA[mng_regdate >= #{start} and mng_regdate <= #{endt}]]>
+				<if test="mng_idx != null and mng_idx != ''">
+					and mng_idx = #{mng_idx}
+				</if>
+				<if test="id != null and id != ''">
+					and m.id like '%'||#{id}||'%'
+				</if>
+				<if test="name != null and name != ''">
+					and m.name like '%'||#{name}||'%'
+				</if>
+				<if test="mng_contact != null and mng_contact != ''">
+					and mng_contact like '%'||#{mng_contact}||'%'
+				</if>
+				<if test="mng_email != null and mng_email != ''">
+					and (mng_email like '%'||#{mng_email}||'%' or m.email like '%'||#{mng_email}||'%')
+				</if>
+			</where>
+	</select>
+	
+	<select id="managerList" parameterType="mngvo" resultType="mngvo">
+		select * from (
+			select rownum as r_num, a.* from (
+				select mng.*, m.name, m.id, m.email from manager mng, members m
+					<where>
+						mng.m_idx = m.m_idx and <![CDATA[mng_regdate >= #{start} and mng_regdate <= #{endt}]]>
+						<if test="mng_idx != null and mng_idx != ''">
+							and mng_idx = #{mng_idx}
+						</if>
+						<if test="id != null and id != ''">
+							and m.id like '%'||#{id}||'%'
+						</if>
+						<if test="name != null and name != ''">
+							and m.name like '%'||#{name}||'%'
+						</if>
+						<if test="mng_contact != null and mng_contact != ''">
+							and mng_contact like '%'||#{mng_contact}||'%'
+						</if>
+						<if test="mng_email != null and mng_email != ''">
+							and (mng_email like '%'||#{mng_email}||'%' or m.email like '%'||#{mng_email}||'%')
+						</if>
+					</where>
+					order by mng_idx desc
+				) a
+			) where r_num between #{begin} and #{end}
+	</select>
+	
+	<select id="chkId" parameterType="String" resultType="int">
+		select count(*) from members where id = #{id}
+	</select>
+	
+	<insert id="regManager">
+		insert into manager(mng_idx, m_idx, mng_contact, mng_email, mng_grade, mng_regdate) values(
+			mng_seq.nextval, (
+				select last_number - 1 from user_sequences where sequence_name = 'MEMBERS_SEQ'
+			), #{mng_contact}, #{mng_email}, #{mng_grade}, sysdate
+		)
+	</insert>
+	
+	<select id="chkAdmin" parameterType="mvo" resultType="int">
+		select count(*) from manager where m_idx = #{m_idx}
+	</select>
+</mapper>
